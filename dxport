@@ -1,0 +1,246 @@
+#! /bin/sh
+
+# Copyright (c) 2019 Dennis Wölfing
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+set -e
+
+dxport_me="$0"
+dxportdir="$(cd "$(dirname "$0")" && pwd)"
+dxport_builddir="$dxportdir/build"
+
+dxport_all='
+binutils
+gcc
+libgmp
+libmpc
+libmpfr
+libstdc++
+libz
+'
+
+dxport_absolute_path() {
+    case "$1" in
+    /*)
+        echo "$1"
+        ;;
+    *)
+        echo "$PWD/$1"
+        ;;
+    esac
+}
+
+dxport_check_sha256() {
+    if [ -n "$src_sha256" ]; then
+        printf "%s\t%s\n" "$src_sha256" "$1" | sha256sum -c
+    fi
+}
+
+dxport_default_funcs() {
+    prepare_source() {
+        :
+    }
+
+    prepare() {
+        :
+    }
+
+    build() {
+        cd "$builddir"
+        if [ "$buildsystem" = configure ]; then
+            "$srcdir/configure" --host="$host" --prefix= $extra_configure_flags
+        fi
+
+        [ -n "$MAKEFLAGS" ] || MAKEFLAGS=-j8
+        make $MAKEFLAGS $make_targets
+    }
+
+    install_port() {
+        cd "$builddir"
+        [ -n "$install_targets" ] || install_targets=install
+        make $install_targets DESTDIR="$SYSROOT"
+    }
+
+    install_license() {
+        if [ -n "$license_files" ]; then
+            cd "$srcdir"
+            mkdir -p "$SYSROOT/share/licenses/$portname"
+            cp $license_files "$SYSROOT/share/licenses/$portname"
+        fi
+    }
+}
+
+dxport_download_git() {
+    srcdir="$dxport_builddir/$port/$src_basename"
+    if [ -d "$srcdir/.git" ]; then
+        cd "$srcdir"
+        git fetch origin "${src_commit:-HEAD}"
+    else
+        git clone "$src_url" "$srcdir"
+    fi
+
+    cd "$srcdir"
+    git checkout -fq "${src_commit:-origin/HEAD}"
+}
+
+dxport_download_sources() {
+    if [ -n "$src_url" ]; then
+        src_basename="$(basename "$src_url")"
+        case "$src_type" in
+        git)
+            dxport_download_git
+            ;;
+        tar*)
+            dxport_download_tar
+            ;;
+        *)
+            dxport_error "Unsupported src_type '$src_type'"
+        esac
+    fi
+}
+
+dxport_download_tar() {
+    if [ ! -f "$src_basename" ] || ! dxport_check_sha256 "$src_basename"; then
+        wget "$src_url" -O "$src_basename"
+        dxport_check_sha256 "$src_basename"
+    fi
+    tar xf "$src_basename"
+    srcdir="$dxport_builddir/$port/$(echo "$src_basename" | sed "s/\\.$src_type\$//")"
+}
+
+dxport_error() {
+    echo "$dxport_me: $1" >&2
+    exit 1
+}
+
+dxport_get_port_info() {
+    portdir="$dxportdir/$1"
+    . "$portdir/$1.port.sh"
+}
+
+dxport_help() {
+    echo "Usage: $dxport_me [OPTIONS] install [PORT...]
+OPTIONS:
+  --builddir=BUILDDIR      places build files into BUILDDIR
+  --help                   print this help
+  --host=HOST              set host to HOST
+  --sysroot=SYSROOT        set sysroot to SYSROOT"
+}
+
+dxport_install() (
+    portname="$1"
+    dxport_default_funcs
+    dxport_get_port_info "$portname"
+
+    mkdir -p "$dxport_builddir/$portname"
+    cd "$dxport_builddir/$portname"
+
+    dxport_download_sources
+
+    if [ "$buildsystem" = configure ]; then
+        builddir="$dxport_builddir/$portname/build-$portname"
+        rm -rf "$builddir"
+        mkdir -p "$builddir"
+    else
+        builddir="$srcdir"
+    fi
+
+    prepare_source
+
+    cd "$srcdir"
+    for p in $patches; do
+        patch -p1 < "$portdir/$p"
+    done
+
+    prepare
+    build
+    install_port
+    install_license
+
+    if [ -n "$purge" ]; then
+        for file in $purge; do
+            rm -rf "$SYSROOT/$file"
+        done
+    fi
+)
+
+dxport_resolve_dependencies() {
+    result=
+    for port; do
+        if [ "$port" = all ]; then
+            result="$result $(dxport_resolve_dependencies $dxport_all)"
+            continue
+        fi
+        unset depends
+        dxport_get_port_info "$port"
+
+        for dependency in $depends; do
+            result="$result $(dxport_resolve_dependencies "$dependency")"
+        done
+        result="$result $port"
+    done
+
+    printf "%s" "$result" | awk -v RS=' ' -v ORS=' ' '!seen[$0]++'
+}
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+    --builddir=*)
+        dxport_builddir="$(dxport_absolute_path "$(echo "$1" | sed s/--builddir=//)")"
+        shift
+        ;;
+    --help)
+        dxport_help
+        exit
+        ;;
+    --host=*)
+        host="$(echo "$1" | sed s/--host=//)"
+        shift
+        ;;
+    --sysroot=*)
+        SYSROOT="$(dxport_absolute_path "$(echo "$1" | sed s/--sysroot=//)")"
+        shift
+        ;;
+    --)
+        shift
+        break
+        ;;
+    -*)
+        dxport_error "Unexpected option '$1'"
+        ;;
+    *)
+        break
+    esac
+done
+
+if [ "$#" -eq 0 ]; then
+    dxport_error "No command given"
+fi
+
+case "$1" in
+install)
+    [ -n "$host" ] || dxport_error "No host given"
+    [ -n "${SYSROOT+x}" ] || dxport_error "No sysroot given"
+    shift
+
+    ports="$(dxport_resolve_dependencies "$@")"
+    echo "The following ports will be installed:$ports"
+
+    for port in $ports; do
+        dxport_install "$port"
+    done
+    ;;
+*)
+    dxport_error "Unknown command '$1'"
+esac
