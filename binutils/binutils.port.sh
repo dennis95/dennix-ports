@@ -1,4 +1,5 @@
 depends=libz
+version=2.26
 src_url=https://github.com/dennis95/dennix-binutils
 src_type=git
 # We always build the latest commit.

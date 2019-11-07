@@ -1,3 +1,4 @@
+version=1.2.8.f
 src_url=https://gitlab.com/sortix/libz.git
 src_type=git
 src_commit=752c1630421502d6c837506d810f7918ac8cdd27
