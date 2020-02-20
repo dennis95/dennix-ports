@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright (c) 2019 Dennis Wölfing
+# Copyright (c) 2019, 2020 Dennis Wölfing
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -47,7 +47,7 @@ dxport_check_sha256() {
 
 dxport_default_funcs() {
     prepare_source() {
-        :
+        dxport_unused_prepare_source=yes
     }
 
     prepare() {
@@ -80,7 +80,7 @@ dxport_default_funcs() {
 }
 
 dxport_download_git() {
-    srcdir="$dxport_builddir/$port/$src_basename"
+    srcdir="$dxport_builddir/$port/${src_basename%.git}"
     if [ -d "$srcdir/.git" ]; then
         cd "$srcdir"
         git fetch origin "${src_commit:-HEAD}"
@@ -111,13 +111,53 @@ dxport_download_sources() {
 }
 
 dxport_download_tar() {
-    if [ ! -f "$src_basename" ] || ! dxport_check_sha256 "$src_basename"; then
-        wget "$src_url" -O "$src_basename"
-        dxport_check_sha256 "$src_basename"
+    [ "$dxport_dump" = yes ] && dxport_archive="$portdir/$src_url" || dxport_archive="$src_basename"
+    if [ ! -f "$dxport_archive" ] || ! dxport_check_sha256 "$dxport_archive"; then
+        wget "$src_url" -O "$dxport_archive"
+        dxport_check_sha256 "$dxport_archive"
     fi
-    tar xf "$src_basename"
-    srcdir="$dxport_builddir/$port/$(echo "$src_basename" | sed "s/\\.$src_type\$//")"
+    tar xf "$dxport_archive"
+    srcdir="$dxport_builddir/$port/${src_basename%.$src_type}"
 }
+
+dxport_dump() (
+    set -e
+    portname="$1"
+    cp -R "$dxportdir/$portname" "$dxport_builddir/dump/$portname"
+
+    dxport_default_funcs
+    dxport_get_port_info "$portname"
+    [ "$dxport_dump" = yes ] && return 0
+
+    mkdir -p "$dxport_builddir/$portname"
+    cd "$dxport_builddir/$portname"
+
+    dxport_download_sources
+    prepare_source
+
+    case "$dxport_unused_prepare_source:$src_type" in
+    yes:tar*)
+        cp "$dxport_archive" "$dxport_builddir/dump/$portname"
+        src_url="$src_basename"
+        ;;
+    *)
+        cd "$srcdir/.."
+        srcdir_base="$(basename "$srcdir")"
+        tar cJf "$dxport_builddir/dump/$portname/$srcdir_base.tar.xz" --exclude="$srcdir_base/.git" "$srcdir_base"
+        src_url="$srcdir_base.tar.xz"
+        src_type=tar.xz
+        src_sha256="$(sha256sum "$dxport_builddir/dump/$portname/$src_url" | cut -c1-64)"
+    esac
+
+    cat >> "$dxport_builddir/dump/$portname/$portname.port.sh" << EOF
+# PORTDUMP
+dxport_dump=yes
+revnum='${revnum:-0}'
+src_url='$src_url'
+src_type='$src_type'
+src_sha256='$src_sha256'
+EOF
+)
 
 dxport_error() {
     echo "$dxport_me: $1" >&2
@@ -131,7 +171,9 @@ dxport_get_port_info() {
 }
 
 dxport_help() {
-    echo "Usage: $dxport_me [OPTIONS] install [INSTALLOPTS] [PORT...]
+    cat << EOF
+Usage: $dxport_me [OPTIONS] install [INSTALLOPTS] [PORT...]
+       $dxport_me [OPTIONS] dump
 OPTIONS:
   --builddir=BUILDDIR      places build files into BUILDDIR
   --help                   print this help
@@ -144,7 +186,8 @@ INSTALLOPTS:
   -k, --keep-going                 do not stop when one port fails to install
   -u, --update-only                do not install any new ports
   -D, --no-update-dependencies     do not update already installed dependencies
-  -U, --no-update                  do not update already installed ports"
+  -U, --no-update                  do not update already installed ports
+EOF
 }
 
 dxport_install() (
@@ -204,7 +247,7 @@ dxport_install() (
         builddir="$srcdir"
     fi
 
-    prepare_source
+    [ "$dxport_dump" = yes ] || prepare_source
 
     cd "$srcdir"
     for p in $patches; do
@@ -276,7 +319,7 @@ EOF
 while [ "$#" -gt 0 ]; do
     case "$1" in
     --builddir=*)
-        dxport_builddir="$(dxport_absolute_path "$(echo "$1" | sed s/--builddir=//)")"
+        dxport_builddir="$(dxport_absolute_path "${1#--builddir=}")"
         shift
         ;;
     --help)
@@ -284,11 +327,11 @@ while [ "$#" -gt 0 ]; do
         exit
         ;;
     --host=*)
-        host="$(echo "$1" | sed s/--host=//)"
+        host="${1#--host=}"
         shift
         ;;
     --sysroot=*)
-        SYSROOT="$(dxport_absolute_path "$(echo "$1" | sed s/--sysroot=//)")"
+        SYSROOT="$(dxport_absolute_path "${1#--sysroot=}")"
         shift
         ;;
     --)
@@ -356,6 +399,14 @@ install)
     if [ -n "$dxport_install_failed" ]; then
         dxport_error "Failed to install the following ports:$dxport_install_failed"
     fi
+    ;;
+dump)
+    rm -rf "$dxport_builddir/dump"
+    mkdir -p "$dxport_builddir/dump"
+    cp "$dxportdir/dxport" "$dxport_builddir/dump"
+    for port in $dxport_all; do
+        dxport_dump "$port"
+    done
     ;;
 *)
     dxport_error "Unknown command '$1'"
