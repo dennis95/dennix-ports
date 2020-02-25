@@ -26,6 +26,7 @@ libmpc
 libmpfr
 libstdc++
 libz
+nyancat
 '
 
 dxport_absolute_path() {
@@ -61,7 +62,7 @@ dxport_default_funcs() {
         fi
 
         [ -n "$MAKEFLAGS" ] || MAKEFLAGS=-j8
-        make $MAKEFLAGS $make_targets
+        make $MAKEFLAGS $make_targets $extra_make_flags
     }
 
     install_port() {
