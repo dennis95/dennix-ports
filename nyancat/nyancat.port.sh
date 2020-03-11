@@ -8,5 +8,5 @@ extra_make_flags="CC=$host-gcc"
 
 install_license() {
     mkdir -p "$SYSROOT/share/licenses/nyancat"
-    head -n49 "$srcdir/src/nyancat.c" | tail -n48 | sed 's/^ \* *//' > "$SYSROOT/share/licenses/nyancat/LICENSE"
+    head -n49 "$srcdir/src/nyancat.c" | tail -n48 | sed -E 's/^ \* ?//' > "$SYSROOT/share/licenses/nyancat/LICENSE"
 }
