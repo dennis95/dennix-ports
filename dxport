@@ -405,7 +405,7 @@ dump)
     rm -rf "$dxport_builddir/dump"
     mkdir -p "$dxport_builddir/dump"
     cp "$dxportdir/dxport" "$dxport_builddir/dump"
-    for port in $dxport_all; do
+    for port in $dxport_all grub; do
         dxport_dump "$port"
     done
     ;;
