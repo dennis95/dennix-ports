@@ -1,4 +1,4 @@
-version=6.1.0
+version=9.3.0
 src_url=https://github.com/dennis95/dennix-gcc
 src_type=git
 # We always build the latest commit.

@@ -1,5 +1,5 @@
 depends="binutils libmpc libstdc++"
-version=6.1.0
+version=9.3.0
 src_url=https://github.com/dennis95/dennix-gcc
 src_type=git
 # We always build the latest commit.
@@ -10,4 +10,4 @@ extra_configure_flags="--target=$host --with-sysroot=/
 make_targets="all-gcc all-target-libgcc"
 install_targets="install-strip-gcc install-strip-target-libgcc"
 license_files="COPYING COPYING.LIB COPYING.RUNTIME COPYING3 COPYING3.LIB"
-purge="libexec/gcc/$host/6.1.0/liblto_plugin.la"
+purge="libexec/gcc/$host/$version/liblto_plugin.la"
