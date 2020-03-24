@@ -11,3 +11,8 @@ make_targets="all-gcc all-target-libgcc"
 install_targets="install-strip-gcc install-strip-target-libgcc"
 license_files="COPYING COPYING.LIB COPYING.RUNTIME COPYING3 COPYING3.LIB"
 purge="libexec/gcc/$host/$version/liblto_plugin.la"
+
+install_port() {
+    make $install_targets DESTDIR="$SYSROOT"
+    ln -fs gcc "$SYSROOT/bin/cc"
+}
