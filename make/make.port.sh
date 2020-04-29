@@ -5,5 +5,5 @@ src_sha256=e05fdde47c5f7ca45cb697e973894ff4f5d79e13b750ed57d7b66d8defc78e19
 patches=0001-make.patch
 buildsystem=configure
 extra_configure_flags=--enable-cross-guesses=risky
-install_target=install-strip
+install_targets=install-strip
 license_files=COPYING
