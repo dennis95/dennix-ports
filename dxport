@@ -21,6 +21,7 @@ dxport_builddir="$dxportdir/build"
 dxport_all='
 binutils
 gcc
+libarchive
 libgmp
 libmpc
 libmpfr
