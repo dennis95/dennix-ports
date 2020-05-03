@@ -23,6 +23,7 @@ binutils
 gcc
 libarchive
 libgmp
+liblzma
 libmpc
 libmpfr
 libstdc++

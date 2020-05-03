@@ -1,4 +1,4 @@
-depends=libz
+depends="liblzma libz"
 version=3.4.2
 src_url=https://www.libarchive.org/downloads/libarchive-$version.tar.xz
 src_type=tar.xz
