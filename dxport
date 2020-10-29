@@ -18,19 +18,8 @@ dxport_me="$0"
 dxportdir="$(cd "$(dirname "$0")" && pwd)"
 dxport_builddir="$dxportdir/build"
 
-dxport_all='
-binutils
-gcc
-libarchive
-libgmp
-liblzma
-libmpc
-libmpfr
-libstdc++
-libz
-make
-nyancat
-'
+dxport_allports=$(find -path ./build -prune -false -o -name '*.port.sh' | sed 's|.*/||;s|\.port\.sh$||')
+dxport_all=$(echo "$dxport_allports" | sed '/^grub$/d')
 
 dxport_absolute_path() {
     case "$1" in
@@ -127,7 +116,7 @@ dxport_download_tar() {
 dxport_dump() (
     set -e
     portname="$1"
-    cp -R "$dxportdir/$portname" "$dxport_builddir/dump/$portname"
+    cp -R "$dxportdir/$portname/." "$dxport_builddir/dump/$portname"
 
     dxport_default_funcs
     dxport_get_port_info "$portname"
@@ -177,7 +166,7 @@ dxport_get_port_info() {
 dxport_help() {
     cat << EOF
 Usage: $dxport_me [OPTIONS] install [INSTALLOPTS] [PORT...]
-       $dxport_me [OPTIONS] dump
+       $dxport_me [OPTIONS] dump [DUMPOPTS] [PORT...]
 OPTIONS:
   --builddir=BUILDDIR      places build files into BUILDDIR
   --help                   print this help
@@ -191,6 +180,9 @@ INSTALLOPTS:
   -u, --update-only                do not install any new ports
   -D, --no-update-dependencies     do not update already installed dependencies
   -U, --no-update                  do not update already installed ports
+
+DUMPOPTS:
+  -d, --no-dependencies            do not dump port dependencies
 EOF
 }
 
@@ -408,10 +400,37 @@ install)
     fi
     ;;
 dump)
-    rm -rf "$dxport_builddir/dump"
+    shift
+    while getopts d-: dxport_arg; do
+        case "$dxport_arg" in
+        d) dxport_no_dependencies=yes ;;
+        -)
+            case "$OPTARG" in
+            no-dependencies) dxport_no_dependencies=yes ;;
+            *) dxport_error "Invalid option '--$OPTARG'"
+            esac ;;
+        *) exit 1
+        esac
+    done
+
+    shift $((OPTIND - 1))
+
+    if [ "$#" = 0 ]; then
+        dxport_ports=$(echo $dxport_allports)
+    else
+        dxport_requested_ports=$(echo "$*" | sed "s/\\ball\\b/$(echo $dxport_allports)/g")
+        if [ "$dxport_no_dependencies" = yes ]; then
+            dxport_ports=$dxport_requested_ports
+        else
+            dxport_ports=$(dxport_resolve_dependencies $dxport_requested_ports) ||
+                    dxport_error "Could not resolve dependencies"
+        fi
+    fi
+    echo "Dumping ports: $dxport_ports"
+
     mkdir -p "$dxport_builddir/dump"
     cp "$dxportdir/dxport" "$dxportdir/dxport-pkg-config" "$dxport_builddir/dump"
-    for port in $dxport_all grub; do
+    for port in $dxport_ports; do
         dxport_dump "$port"
     done
     ;;
