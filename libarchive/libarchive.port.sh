@@ -6,7 +6,6 @@ src_sha256=d8e10494b4d3a15ae9d67a130d3ab869200cfd60b2ab533b391b0a0d5500ada1
 patches=0001-libarchive.patch
 buildsystem=configure
 extra_configure_flags=--disable-maintainer-mode
-install_targets=install-strip
 license_files=COPYING
 purge=lib/libarchive.la
 

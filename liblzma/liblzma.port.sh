@@ -7,7 +7,6 @@ buildsystem=configure
 # We only want the library.
 extra_configure_flags="--disable-threads --disable-xz --disable-xzdec
 --disable-lzmadec --disable-lzmainfo --disable-scripts"
-install_targets=install-strip
 purge=lib/liblzma.la
 
 install_license() {

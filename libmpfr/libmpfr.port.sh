@@ -5,7 +5,6 @@ src_type=tar.xz
 src_sha256=1d3be708604eae0e42d578ba93b390c2a145f17743a744d8f3f8c2ad5855a38a
 patches=0001-config.sub.patch
 buildsystem=configure
-install_targets=install-strip
 purge=lib/libmpfr.la
 
 prepare() {

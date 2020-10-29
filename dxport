@@ -59,8 +59,11 @@ dxport_default_funcs() {
 
     install_port() {
         cd "$builddir"
-        [ -n "$install_targets" ] || install_targets=install
-        make $install_targets DESTDIR="$SYSROOT"
+        if [ -n "$install_targets" ]; then
+            make $install_targets DESTDIR="$SYSROOT"
+        else
+            make install-strip DESTDIR="$SYSROOT" || make install DESTDIR="$SYSROOT"
+        fi
     }
 
     install_license() {

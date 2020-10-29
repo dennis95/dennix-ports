@@ -4,7 +4,6 @@ src_type=git
 # We always build the latest commit.
 buildsystem=configure
 extra_configure_flags="--disable-nls"
-install_targets=install-strip
 license_files="COPYING.RUNTIME COPYING3"
 purge="lib/libstdc++.la lib/libsupc++.la"
 
