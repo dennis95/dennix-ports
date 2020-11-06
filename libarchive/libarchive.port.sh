@@ -9,8 +9,7 @@ extra_configure_flags=--disable-maintainer-mode
 license_files=COPYING
 purge=lib/libarchive.la
 
-install_port() {
-    make $install_targets DESTDIR="$SYSROOT"
+post_install() {
     ln -f "$SYSROOT/bin/bsdcpio" "$SYSROOT/bin/cpio"
     ln -f "$SYSROOT/bin/bsdtar" "$SYSROOT/bin/tar"
 }
