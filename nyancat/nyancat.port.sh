@@ -4,7 +4,6 @@ src_type=git
 src_commit=d594203cc2c7a69c13ffe760a9a2b3dbaf33a9a6
 patches=0001-Port-to-Dennix.patch
 buildsystem=make
-extra_make_flags="CC=$host-gcc"
 
 install_license() {
     mkdir -p "$SYSROOT/share/licenses/nyancat"

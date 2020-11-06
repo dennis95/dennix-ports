@@ -51,6 +51,8 @@ dxport_default_funcs() {
         cd "$builddir"
         if [ "$buildsystem" = configure ]; then
             "$srcdir/configure" --host="$host" --prefix= $extra_configure_flags
+        elif [ "$buildsystem" = make ]; then
+            extra_make_flags="CC=$host-gcc prefix= $extra_make_flags"
         fi
 
         [ -n "$MAKEFLAGS" ] || MAKEFLAGS=-j8
@@ -60,9 +62,9 @@ dxport_default_funcs() {
     install_port() {
         cd "$builddir"
         if [ -n "$install_targets" ]; then
-            make $install_targets DESTDIR="$SYSROOT"
+            make $install_targets DESTDIR="$SYSROOT" $extra_make_flags
         else
-            make install-strip DESTDIR="$SYSROOT" || make install DESTDIR="$SYSROOT"
+            make install-strip DESTDIR="$SYSROOT" $extra_make_flags || make install DESTDIR="$SYSROOT" $extra_make_flags
         fi
     }
 
@@ -72,6 +74,10 @@ dxport_default_funcs() {
             mkdir -p "$SYSROOT/share/licenses/$portname"
             cp $license_files "$SYSROOT/share/licenses/$portname"
         fi
+    }
+
+    post_install() {
+        :
     }
 }
 
@@ -257,6 +263,7 @@ dxport_install() (
     build
     install_port
     install_license
+    post_install
 
     if [ -n "$purge" ]; then
         for file in $purge; do
