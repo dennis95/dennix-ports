@@ -18,7 +18,7 @@ dxport_me="$0"
 dxportdir="$(cd "$(dirname "$0")" && pwd)"
 dxport_builddir="$dxportdir/build"
 
-dxport_allports=$(find -path ./build -prune -false -o -name '*.port.sh' | sed 's|.*/||;s|\.port\.sh$||')
+dxport_allports=$(find -path ./build -prune -false -o -name '*.port.sh' | sed 's|.*/||;s|\.port\.sh$||' | sort)
 dxport_all=$(echo "$dxport_allports" | sed '/^grub$/d')
 
 dxport_absolute_path() {
