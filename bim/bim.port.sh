@@ -1,7 +1,7 @@
-version=2.6.1
+version=2.6.2
 src_url=https://github.com/klange/bim
 src_type=git
-src_commit=cd56264339eaaa18732ead3962dc2823d4726525
+src_commit=575811f5e0a441643d6f3bf677020db4ae849ca4
 patches=0001-Port-to-Dennix.patch
 buildsystem=make
 install_targets=install
