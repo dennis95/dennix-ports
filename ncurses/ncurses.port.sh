@@ -6,6 +6,10 @@ patches="0001-ncurses.patch 0002-terminfo.patch"
 buildsystem=configure
 extra_configure_flags="--enable-overwrite --enable-pc-files --enable-widec
 --with-pkg-config-libdir=/lib/pkgconfig --without-cxx-binding --without-debug
---without-tests cf_cv_sizechange=no"
+--without-tests cf_cv_sizechange=no cf_cv_working_poll=yes"
 license_files=COPYING
 purge=bin/ncursesw6-config
+
+post_install() {
+    ln -fs libncursesw.a "$SYSROOT/lib/libcurses.a"
+}

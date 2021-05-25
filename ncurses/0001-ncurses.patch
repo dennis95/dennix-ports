@@ -12,18 +12,19 @@ diff -Naur a/config.sub b/config.sub
  	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
 diff -Naur a/configure b/configure
 --- a/configure	2020-02-08 22:06:19.000000000 +0100
-+++ b/configure	2021-05-08 17:34:14.458799277 +0200
-@@ -9257,6 +9257,9 @@
++++ b/configure	2021-05-25 11:15:52.479339305 +0200
+@@ -9257,6 +9257,10 @@
  	cf_xopen_source="-D_DARWIN_C_SOURCE"
  	cf_XOPEN_SOURCE=
  	;;
 +(dennix*)
 +	cf_xopen_source="-D_ALL_SOURCE"
++	cf_XOPEN_SOURCE=
 +	;;
  (freebsd*|dragonfly*|midnightbsd*)
  	# 5.x headers associate
  	#	_XOPEN_SOURCE=600 with _POSIX_C_SOURCE=200112L
-@@ -10977,7 +10980,7 @@
+@@ -10977,7 +10981,7 @@
  #include "confdefs.h"
  
  #include <sys/types.h>
@@ -32,6 +33,48 @@ diff -Naur a/configure b/configure
  
  int
  main (void)
+diff -Naur a/ncurses/tinfo/lib_setup.c b/ncurses/tinfo/lib_setup.c
+--- a/ncurses/tinfo/lib_setup.c	2020-02-03 00:34:34.000000000 +0100
++++ b/ncurses/tinfo/lib_setup.c	2021-05-25 11:13:51.302668347 +0200
+@@ -57,7 +57,7 @@
+  *
+  ****************************************************************************/
+ 
+-#if HAVE_SIZECHANGE
++#if HAVE_SIZECHANGE || defined(__dennix__)
+ # if !defined(sun) || !TERMIOS
+ #  if HAVE_SYS_IOCTL_H
+ #   include <sys/ioctl.h>
+@@ -331,7 +331,7 @@
+ 	       *linep, *colp));
+ 	}
+ #endif
+-#if HAVE_SIZECHANGE
++#if HAVE_SIZECHANGE || defined(__dennix__)
+ 	/* try asking the OS */
+ 	if (NC_ISATTY(cur_term->Filedes)) {
+ 	    STRUCT_WINSIZE size;
+diff -Naur a/ncurses/tinfo/tinfo_driver.c b/ncurses/tinfo/tinfo_driver.c
+--- a/ncurses/tinfo/tinfo_driver.c	2020-02-03 00:34:34.000000000 +0100
++++ b/ncurses/tinfo/tinfo_driver.c	2021-05-25 11:13:51.302668347 +0200
+@@ -44,7 +44,7 @@
+ #endif
+ #endif
+ 
+-#if HAVE_SIZECHANGE
++#if HAVE_SIZECHANGE || defined(__dennix__)
+ # if !defined(sun) || !TERMIOS
+ #  if HAVE_SYS_IOCTL_H
+ #   include <sys/ioctl.h>
+@@ -448,7 +448,7 @@
+ 	       *linep, *colp));
+ 	}
+ #endif
+-#if HAVE_SIZECHANGE
++#if HAVE_SIZECHANGE || defined(__dennix__)
+ 	/* try asking the OS */
+ 	{
+ 	    TERMINAL *termp = (TERMINAL *) TCB;
 diff -Naur a/ncurses/tty/lib_twait.c b/ncurses/tty/lib_twait.c
 --- a/ncurses/tty/lib_twait.c	2020-02-03 00:34:34.000000000 +0100
 +++ b/ncurses/tty/lib_twait.c	2021-05-08 17:35:27.465464943 +0200
