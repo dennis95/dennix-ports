@@ -1,0 +1,12 @@
+diff -Naur a/build-scripts/config.sub b/build-scripts/config.sub
+--- a/build-scripts/config.sub	2018-10-31 15:59:00.000000000 +0100
++++ b/build-scripts/config.sub	2021-06-27 18:26:58.658783279 +0200
+@@ -1411,7 +1411,7 @@
+ 	-gnu* | -bsd* | -mach* | -minix* | -genix* | -ultrix* | -irix* \
+ 	      | -*vms* | -sco* | -esix* | -isc* | -aix* | -cnk* | -sunos | -sunos[34]*\
+ 	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
+-	      | -sym* | -kopensolaris* | -plan9* \
++	      | -sym* | -kopensolaris* | -plan9* | -dennix* \
+ 	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
+ 	      | -aos* | -aros* | -cloudabi* | -sortix* \
+ 	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \

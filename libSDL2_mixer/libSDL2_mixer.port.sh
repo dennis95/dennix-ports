@@ -1,0 +1,9 @@
+depends=libSDL2
+version=2.0.4
+src_url=https://www.libsdl.org/projects/SDL_mixer/release/SDL2_mixer-$version.tar.gz
+src_type=tar.gz
+src_sha256=b4cf5a382c061cd75081cf246c2aa2f9df8db04bdda8dcdc6b6cca55bede2419
+patches=0001-config.sub.patch
+buildsystem=configure
+license_files="COPYING.txt timidity/COPYING"
+purge=lib/libSDL2_mixer.la
