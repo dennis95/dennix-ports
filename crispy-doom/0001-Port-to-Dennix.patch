@@ -1,0 +1,182 @@
+From 4144ab5e7979ba94d21366f15c8d1b669274134b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Dennis=20W=C3=B6lfing?= <denniswoelfing@gmx.de>
+Date: Sun, 27 Jun 2021 20:28:42 +0200
+Subject: [PATCH] Port to Dennix.
+
+---
+ autotools/config.sub |  2 +-
+ src/d_loop.c         |  4 ++++
+ src/i_sdlmusic.c     |  6 ++----
+ src/i_video.c        | 11 ++++-------
+ src/net_dedicated.c  |  2 ++
+ src/net_query.c      |  2 ++
+ src/net_sdl.c        |  4 ++--
+ src/setup/display.c  |  6 +-----
+ 8 files changed, 18 insertions(+), 19 deletions(-)
+
+diff --git a/autotools/config.sub b/autotools/config.sub
+index 63c1f1c8..4df8bd2d 100755
+--- a/autotools/config.sub
++++ b/autotools/config.sub
+@@ -1700,7 +1700,7 @@ case $os in
+ 	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
+ 	     | sym* |  plan9* | psp* | sim* | xray* | os68k* | v88r* \
+ 	     | hiux* | abug | nacl* | netware* | windows* \
+-	     | os9* | macos* | osx* | ios* \
++	     | os9* | macos* | osx* | ios* | dennix* \
+ 	     | mpw* | magic* | mmixware* | mon960* | lnews* \
+ 	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
+ 	     | aos* | aros* | cloudabi* | sortix* | twizzler* \
+diff --git a/src/d_loop.c b/src/d_loop.c
+index 3985f825..058f02f8 100644
+--- a/src/d_loop.c
++++ b/src/d_loop.c
+@@ -451,7 +451,9 @@ boolean D_InitNetGame(net_connect_data_t *connect_data)
+     {
+         NET_SV_Init();
+         NET_SV_AddModule(&net_loop_server_module);
++#ifndef __dennix__
+         NET_SV_AddModule(&net_sdl_module);
++#endif
+         NET_SV_RegisterWithMaster();
+ 
+         net_loop_client_module.InitClient();
+@@ -491,9 +493,11 @@ boolean D_InitNetGame(net_connect_data_t *connect_data)
+ 
+         if (i > 0)
+         {
++#ifndef __dennix__
+             net_sdl_module.InitClient();
+             addr = net_sdl_module.ResolveAddress(myargv[i+1]);
+             NET_ReferenceAddress(addr);
++#endif
+ 
+             if (addr == NULL)
+             {
+diff --git a/src/i_sdlmusic.c b/src/i_sdlmusic.c
+index fe0e4248..d58cf09e 100644
+--- a/src/i_sdlmusic.c
++++ b/src/i_sdlmusic.c
+@@ -112,15 +112,13 @@ void I_InitTimidityConfig(void)
+     // config file.
+     if (success)
+     {
+-        env_string = M_StringJoin("TIMIDITY_CFG=", temp_timidity_cfg, NULL);
+-        putenv(env_string);
+-        // env_string deliberately not freed; see putenv manpage
++        setenv("TIMIDITY_CFG", temp_timidity_cfg, 1);
+ 
+         // If we're explicitly configured to use Timidity (either through
+         // timidity_cfg_path or GUS mode), then disable Fluidsynth, because
+         // SDL_mixer considers Fluidsynth a higher priority than Timidity and
+         // therefore can end up circumventing Timidity entirely.
+-        putenv("SDL_MIXER_DISABLE_FLUIDSYNTH=1");
++        setenv("SDL_MIXER_DISABLE_FLUIDSYNTH", "1", 1);
+     }
+     else
+     {
+diff --git a/src/i_video.c b/src/i_video.c
+index e48429b7..b5d2d4c3 100644
+--- a/src/i_video.c
++++ b/src/i_video.c
+@@ -948,6 +948,7 @@ void I_SetPalette (byte *doompalette)
+         palette[i].r = gamma2table[usegamma][*doompalette++] & ~3;
+         palette[i].g = gamma2table[usegamma][*doompalette++] & ~3;
+         palette[i].b = gamma2table[usegamma][*doompalette++] & ~3;
++        palette[i].a = 255;
+     }
+ 
+     palette_to_set = true;
+@@ -1229,11 +1230,7 @@ static void SetSDLVideoDriver(void)
+ 
+     if (strcmp(video_driver, "") != 0)
+     {
+-        char *env_string;
+-
+-        env_string = M_StringJoin("SDL_VIDEODRIVER=", video_driver, NULL);
+-        putenv(env_string);
+-        free(env_string);
++        setenv("SDL_VIDEODRIVER", video_driver, 1);
+     }
+ }
+ 
+@@ -1603,9 +1600,9 @@ void I_InitGraphics(void)
+         unsigned int winid;
+ 
+         sscanf(env, "0x%x", &winid);
+-        M_snprintf(winenv, sizeof(winenv), "SDL_WINDOWID=%u", winid);
++        M_snprintf(winenv, sizeof(winenv), "%u", winid);
+ 
+-        putenv(winenv);
++        setenv("SDL_WINDOWID", winenv, 1);
+     }
+ 
+     SetSDLVideoDriver();
+diff --git a/src/net_dedicated.c b/src/net_dedicated.c
+index dcb9f8fa..a2bfd434 100644
+--- a/src/net_dedicated.c
++++ b/src/net_dedicated.c
+@@ -67,7 +67,9 @@ void NET_DedicatedServer(void)
+ 
+     NET_OpenLog();
+     NET_SV_Init();
++#ifndef __dennix__
+     NET_SV_AddModule(&net_sdl_module);
++#endif
+     NET_SV_RegisterWithMaster();
+ 
+     while (true)
+diff --git a/src/net_query.c b/src/net_query.c
+index 3fe2cc2a..db525012 100644
+--- a/src/net_query.c
++++ b/src/net_query.c
+@@ -584,8 +584,10 @@ void NET_Query_Init(void)
+     if (query_context == NULL)
+     {
+         query_context = NET_NewContext();
++#ifndef __dennix__
+         NET_AddModule(query_context, &net_sdl_module);
+         net_sdl_module.InitClient();
++#endif
+     }
+ 
+     free(targets);
+diff --git a/src/net_sdl.c b/src/net_sdl.c
+index c9b3e81f..aa6566c5 100644
+--- a/src/net_sdl.c
++++ b/src/net_sdl.c
+@@ -14,7 +14,7 @@
+ // DESCRIPTION:
+ //     Networking module which uses SDL_net
+ //
+-
++#ifndef __dennix__
+ #include <stdlib.h>
+ #include <string.h>
+ #include <stdio.h>
+@@ -375,4 +375,4 @@ net_module_t net_sdl_module =
+     NET_SDL_FreeAddress,
+     NET_SDL_ResolveAddress,
+ };
+-
++#endif
+diff --git a/src/setup/display.c b/src/setup/display.c
+index b6d3d440..af94284f 100644
+--- a/src/setup/display.c
++++ b/src/setup/display.c
+@@ -112,11 +112,7 @@ void SetDisplayDriver(void)
+ 
+     if (strcmp(video_driver, "") != 0)
+     {
+-        char *env_string;
+-
+-        env_string = M_StringJoin("SDL_VIDEODRIVER=", video_driver, NULL);
+-        putenv(env_string);
+-        free(env_string);
++        setenv("SDL_VIDEODRIVER", video_driver, 1);
+     }
+ }
+ 
+-- 
+2.32.0
+

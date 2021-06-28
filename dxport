@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright (c) 2019, 2020 Dennis Wölfing
+# Copyright (c) 2019, 2020, 2021 Dennis Wölfing
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -53,6 +53,8 @@ dxport_default_funcs() {
             "$srcdir/configure" --host="$host" --prefix= $extra_configure_flags
         elif [ "$buildsystem" = make ]; then
             extra_make_flags="CC=$host-gcc prefix= $extra_make_flags"
+        elif [ "$buildsystem" = none ]; then
+            return
         fi
 
         [ -n "$MAKEFLAGS" ] || MAKEFLAGS=-j8
@@ -106,6 +108,9 @@ dxport_download_sources() {
         tar*)
             dxport_download_tar
             ;;
+        zip)
+            dxport_download_zip
+            ;;
         *)
             dxport_error "Unsupported src_type '$src_type'"
         esac
@@ -120,6 +125,17 @@ dxport_download_tar() {
     fi
     tar xf "$dxport_archive"
     srcdir="$dxport_builddir/$port/${src_basename%.$src_type}"
+}
+
+dxport_download_zip() {
+    [ "$dxport_dump" = yes ] && dxport_archive="$portdir/$src_url" || dxport_archive="$src_basename"
+    if [ ! -f "$dxport_archive" ] || ! dxport_check_sha256 "$dxport_archive"; then
+        wget "$src_url" -O "$dxport_archive"
+        dxport_check_sha256 "$dxport_archive"
+    fi
+    srcdir="$dxport_builddir/$port/${src_basename%.$src_type}"
+    mkdir -p "$srcdir"
+    bsdtar xf "$dxport_archive" -C "$srcdir"
 }
 
 dxport_dump() (
