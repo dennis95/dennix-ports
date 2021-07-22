@@ -457,7 +457,7 @@ dump)
     mkdir -p "$dxport_builddir/dump"
     cp "$dxportdir/dxport" "$dxportdir/dxport-pkg-config" "$dxport_builddir/dump"
     for port in $dxport_ports; do
-        dxport_dump "$port"
+        dxport_dump "$port" || dxport_error "Failed to dump port: $port"
     done
     ;;
 *)
