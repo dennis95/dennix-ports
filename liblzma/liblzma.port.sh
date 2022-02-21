@@ -5,7 +5,7 @@ src_sha256=3e1e518ffc912f86608a8cb35e4bd41ad1aec210df2a47aaa1f95e7f5576ef56
 patches=0001-liblzma.patch
 buildsystem=configure
 # We only want the library.
-extra_configure_flags="--disable-threads --disable-xz --disable-xzdec
+extra_configure_flags="--disable-xz --disable-xzdec
 --disable-lzmadec --disable-lzmainfo --disable-scripts"
 purge=lib/liblzma.la
 
