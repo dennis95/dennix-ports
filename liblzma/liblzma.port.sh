@@ -6,7 +6,7 @@ patches=0001-liblzma.patch
 buildsystem=configure
 # We only want the library.
 extra_configure_flags="--disable-xz --disable-xzdec
---disable-lzmadec --disable-lzmainfo --disable-scripts"
+--disable-lzmadec --disable-lzmainfo --disable-scripts --disable-nls"
 purge=lib/liblzma.la
 
 install_license() {

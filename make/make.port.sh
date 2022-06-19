@@ -1,3 +1,4 @@
+depends=gettext-runtime
 version=4.3
 src_url=https://ftp.gnu.org/gnu/make/make-$version.tar.gz
 src_type=tar.gz

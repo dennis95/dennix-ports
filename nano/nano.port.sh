@@ -1,4 +1,4 @@
-depends="libz ncurses"
+depends="gettext-runtime libz ncurses"
 version=5.7
 src_url=https://nano-editor.org/dist/v5/nano-$version.tar.xz
 src_type=tar.xz
