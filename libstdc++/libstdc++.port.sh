@@ -31,6 +31,7 @@ prepare_source() {
 
     mkdir -p "$srcdir/libstdc++-v3/libgcc"
     cp "$srcdir/libgcc/"*.h "$srcdir/libstdc++-v3/libgcc"
+    ln -s "gthr-posix.h" "$srcdir/libstdc++-v3/libgcc/gthr-default.h"
     cp "$srcdir/include/ansidecl.h" "$srcdir/include/libiberty.h" \
         "$srcdir/include/demangle.h" "$srcdir/libstdc++-v3/include"
 
