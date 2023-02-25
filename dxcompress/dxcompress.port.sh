@@ -1,8 +1,8 @@
 depends="liblzma libz"
-version=1.0
+version=1.1
 src_url=https://github.com/dennis95/dxcompress/releases/download/dxcompress-$version/dxcompress-$version.tar.xz
 src_type=tar.xz
-src_sha256=28ef275fff1ac2c126cd5bc3d7319038266274db8efe6bdc1f33ba6d5e235f4e
+src_sha256=89c1331a860467a58e0c69e54238fb29c7bdeb436672009efd61964fb6840dc6
 buildsystem=configure
 extra_configure_flags="--enable-wrappers=gzip,xz"
 license_files=LICENSE
