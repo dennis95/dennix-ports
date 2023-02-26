@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright (c) 2019, 2020, 2021 Dennis Wölfing
+# Copyright (c) 2019, 2020, 2021, 2023 Dennis Wölfing
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -57,8 +57,7 @@ dxport_default_funcs() {
             return
         fi
 
-        [ -n "$MAKEFLAGS" ] || MAKEFLAGS=-j8
-        make $MAKEFLAGS $make_targets $extra_make_flags
+        make $dxport_jobs $make_targets $extra_make_flags
     }
 
     install_port() {
@@ -201,6 +200,7 @@ OPTIONS:
 INSTALLOPTS:
   -d, --no-dependencies            do not install port dependencies
   -f, --force-install              reinstall already installed ports
+  -j, --jobs=JOBS                  run up to JOBS jobs in parallel during build
   -k, --keep-going                 do not stop when one port fails to install
   -u, --update-only                do not install any new ports
   -D, --no-update-dependencies     do not update already installed dependencies
@@ -374,6 +374,7 @@ fi
 
 export dxport_sysroot="$SYSROOT"
 export PKG_CONFIG="$dxportdir/dxport-pkg-config"
+dxport_jobs=
 
 case "$1" in
 install)
@@ -381,10 +382,11 @@ install)
     [ -n "${SYSROOT+x}" ] || dxport_error "No sysroot given"
     shift
 
-    while getopts dfkuDU-: dxport_arg; do
+    while getopts dfj:kuDU-: dxport_arg; do
         case "$dxport_arg" in
         d) dxport_install_no_dependencies=yes ;;
         f) dxport_install_force_install=yes ;;
+        j) dxport_jobs="-j$OPTARG" ;;
         k) dxport_install_keep_going=yes ;;
         u) dxport_install_update_only=yes ;;
         D) dxport_install_no_update_dependencies=yes ;;
@@ -392,6 +394,7 @@ install)
         -)
             case "$OPTARG" in
             force-install) dxport_install_force_install=yes ;;
+            jobs=*) dxport_jobs="-j${OPTARG#*=}" ;;
             keep-going) dxport_install_keep_going=yes ;;
             no-dependencies) dxport_install_no_dependencies=yes ;;
             no-update) dxport_install_no_update=yes ;;
